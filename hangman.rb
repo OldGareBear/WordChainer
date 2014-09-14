@@ -3,6 +3,8 @@ require 'set'
 class WordChainer
   attr_reader :dictionary
   
+  attr_writer :all_seen_words
+  
   def initialize(dictionary_file_name)
     dictionary_array = File.readlines(dictionary_file_name).map(&:chomp)
     @dictionary = Set.new(dictionary_array)
@@ -18,6 +20,7 @@ class WordChainer
       entry.each_char.with_index do |letter, letter_position|
         letters_off += 1 unless word[letter_position] == letter
       end
+      
       adjacents << entry if letters_off == 1
     end
     
@@ -29,14 +32,14 @@ class WordChainer
     @all_seen_words = { source => nil }
     
     until @current_words.empty?
-      new_current_words = explore_current_words
+      new_current_words = explore_current_words(source, target)
       @current_words = new_current_words
     end
     
-    nil
+    return new_current_words
   end
   
-  def explore_current_words
+  def explore_current_words(source, target)
     new_current_words = []
     
     @current_words.each do |current_word|
@@ -46,15 +49,29 @@ class WordChainer
         next if @all_seen_words.keys.include?(adjacent_word)
         new_current_words << adjacent_word
         @all_seen_words[adjacent_word] = current_word
+        
+        return build_path(source, target) if @all_seen_words.keys.include?(target)
       end
     end
     
-    @all_seen_words.each { |child, parent| puts "#{child}: #{parent}" }
-    new_current_words
+    new_current_words 
+  end
+  
+  def build_path(source, target)
+    path = [target]
+    parent = ""
+    
+    until parent == source
+      parent = @all_seen_words[path.last]
+      path << parent
+    end
+    
+    puts path.reverse
+    @current_words = []
   end
   
 end
 
 w = WordChainer.new("dictionary.txt")
 
-w.run("duck", "ruby")
+puts w.run("duck", "ruby")
