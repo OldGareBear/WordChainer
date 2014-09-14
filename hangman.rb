@@ -7,7 +7,6 @@ class WordChainer
     dictionary_array = File.readlines(dictionary_file_name).map(&:chomp)
     @dictionary = Set.new(dictionary_array)
     @current_words = []
-    @all_seen_words = []
   end
   
   def adjacent_words(word)
@@ -27,11 +26,10 @@ class WordChainer
   
   def run(source, target)
     @current_words << source
-    @all_seen_words << source
+    @all_seen_words = { source => nil }
     
     until @current_words.empty?
       new_current_words = explore_current_words
-      puts new_current_words
       @current_words = new_current_words
     end
     
@@ -45,12 +43,13 @@ class WordChainer
       adjacent_words = adjacent_words(current_word)
       
       adjacent_words.each do |adjacent_word|
-        next if @all_seen_words.include?(adjacent_word)
+        next if @all_seen_words.keys.include?(adjacent_word)
         new_current_words << adjacent_word
-        @all_seen_words << adjacent_word
+        @all_seen_words[adjacent_word] = current_word
       end
     end
     
+    @all_seen_words.each { |child, parent| puts "#{child}: #{parent}" }
     new_current_words
   end
   
@@ -58,4 +57,4 @@ end
 
 w = WordChainer.new("dictionary.txt")
 
-w.run("fuck", "ruby")
+w.run("duck", "ruby")
